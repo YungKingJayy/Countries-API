@@ -26,10 +26,10 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="w-full flex items-center justify-center py-6 px-16 bg-white dark:bg-darkblue">
+    <nav className="w-full flex items-center justify-center py-6 px-16 bg-white dark:bg-darkblue shadow-sm">
       <div className="w-full max-w-[1440px] flex items-center justify-between">
         <h1 className="text-darktext dark:text-white text-2xl font-extrabold">Where in the world?</h1>
-        <Button className="flex items-center gap-3 bg-transparent hover:bg-transparent" onClick={toggleTheme}>
+        <Button className="flex items-center gap-3 bg-transparent hover:bg-transparent !p-0" onClick={toggleTheme}>
           <Image
             src={currentTheme === "light" ? "icons/moon-solid.svg" : "icons/moon-regular.svg"}
             alt=""
