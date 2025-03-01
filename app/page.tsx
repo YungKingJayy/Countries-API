@@ -1,61 +1,65 @@
 "use client";
 
-import Image from "next/image";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Countries from "@/components/Countries";
 import Filter from "@/components/Filter";
-import Navbar from "@/components/ui/Navbar";
 
 export default function Home() {
   const [countries, setCountries] = useState([]);
   const [search, setSearch] = useState("");
   const [region, setRegion] = useState("all");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true); // Loading state added
 
   useEffect(() => {
-    const url = search ? `https://restcountries.com/v3.1/name/${search}` : "https://restcountries.com/v3.1/all";
-
-    fetch(url)
+    setLoading(true); // Start loading before fetching data
+    fetch("https://restcountries.com/v3.1/all")
       .then((res) => {
         if (!res.ok) {
-          throw new Error("No countries found");
+          throw new Error("Failed to fetch countries");
         }
         return res.json();
       })
       .then((data) => {
-        if (region !== "all") {
-          data = data.filter((country: { region: string; }) => country.region === region);
-        }
-        setCountries(data);
         console.log(data);
-        
+        setCountries(data);
         setError("");
       })
       .catch((err) => {
         console.error(err);
-        setCountries([])
+        setCountries([]);
         setError(err.message);
-      });
-  }, [search, region]);
+      })
+      .finally(() => setLoading(false)); // Stop loading when request completes
+  }, []);
 
-
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
-  };
-
-  const handleRegionChange = (value: string) => {
-    setRegion(value);
-  };
+  // Memoized search and filter logic
+  const filteredCountries = useMemo(() => {
+    return countries.filter((country: { region: string; name: { common: string } }) => {
+      const matchesRegion = region === "all" || country.region === region;
+      const matchesSearch = search === "" || country.name.common.toLowerCase().includes(search.toLowerCase());
+      return matchesRegion && matchesSearch;
+    });
+  }, [countries, search, region]);
 
   return (
     <main className="flex min-h-screen flex-col items-center">
-      <Filter onSearchChange={handleSearchChange} onRegionChange={handleRegionChange} />
-      {error ? (
+      <Filter onSearchChange={setSearch} onRegionChange={setRegion} />
+
+      {loading ? (
+        <div className="px-16 py-10">
+          <p className="animate-pulse text-gray-500">Loading countries...</p>
+        </div>
+      ) : error ? (
         <div className="px-16 py-10">
           <p className="text-red-500">{error}</p>
         </div>
+      ) : filteredCountries.length === 0 ? (
+        <div className="px-16 py-10">
+          <p className="text-gray-500">No countries found matching your criteria.</p>
+        </div>
       ) : (
-        <Countries countries={countries} />
+        <Countries countries={filteredCountries} />
       )}
     </main>
   );
